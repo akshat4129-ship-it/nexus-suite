@@ -1,28 +1,45 @@
-import type { Metadata } from "next";
+'use client';
+
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/Navigation";
+import { ThemeProvider } from "@/components/theme-provider";
+import { usePathname } from "next/navigation";
 
 const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Nexus Suite | Next-Gen Enterprise Infrastructure",
-  description: "A state-of-the-art enterprise management suite designed for the future.",
-};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isOnboarding = pathname?.startsWith('/onboarding');
+  const isDashboard = pathname?.startsWith('/dashboard');
+  const isSettings = pathname?.startsWith('/settings');
+  const isEditor = pathname?.includes('/edit');
+  const isEmail = pathname?.includes('/email');
+  
+  const showNav = !isOnboarding && !isDashboard && !isSettings && !isEditor && !isEmail;
+
+
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <Navigation />
-        <main className="pt-20 px-4 max-w-7xl mx-auto min-h-screen">
-          {children}
-        </main>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {showNav && <Navigation />}
+          <main className="min-h-screen">
+            {children}
+          </main>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+
+

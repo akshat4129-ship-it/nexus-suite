@@ -6,13 +6,11 @@ import { motion } from 'framer-motion';
 import { LayoutGrid, Users, Settings, Activity, ShieldCheck, Box } from 'lucide-react';
 
 const navItems = [
-  { name: 'Dashboard', href: '/', icon: LayoutGrid },
-  { name: 'Assets', href: '/assets', icon: Box },
-  { name: 'Users', href: '/users', icon: Users },
-  { name: 'Analytics', href: '/analytics', icon: Activity },
-  { name: 'Security', href: '/security', icon: ShieldCheck },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+  { name: 'Onboarding', href: '/onboarding', icon: Box },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
+
 
 export const Navigation = () => {
   return (
