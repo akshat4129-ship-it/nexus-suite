@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// AgencyRecap — schema.prisma
+// Data Agent · Pipeline Step 3
+// Generated: 2026-03-16
 
 generator client {
   provider = "prisma-client-js"
@@ -10,10 +11,397 @@ datasource db {
 }
 
 
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Plan {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum Platform {
+  ZOOM
+  GOOGLE_MEET
+  TEAMS
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  IN_PROGRESS
+  PROCESSING
+  COMPLETED
+  FAILED
+  TOO_SHORT
+}
+
+enum TranscriptStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum RecapStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  CONFIRMED
+  FAILED
+}
+
+enum ActionItemStatus {
+  PENDING
+  PUSHED
+  COMPLETED
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum EmailEventType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  CONFIRMED
+  BOUNCED
+  UNSUBSCRIBED
+}
+
+enum IntegrationType {
+  HUBSPOT
+  SALESFORCE
+  ZOOM
+  GOOGLE_MEET
+  TEAMS
+  ZAPIER
+}
+
+enum IntegrationStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+enum TemplateTone {
+  STANDARD
+  FORMAL
+  CASUAL
+}
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
+
+model Organization {
+  id               String    @id @default(uuid())
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+
+  clerk_org_id     String    @unique
+  name             String
+  slug             String    @unique
+  logo_url         String?
+  brand_color      String?
+  email_signature  String?
+  custom_domain    String?
+  plan             Plan      @default(FREE)
+  plan_expires_at  DateTime?
+
+  users            User[]
+  clients          Client[]
+  meetings         Meeting[]
+  templates        RecapTemplate[]
+  integrations     Integration[]
+  recaps           Recap[]
+  audit_logs       AuditLog[]
+
+  @@index([clerk_org_id])
+  @@index([deleted_at])
+  @@index([plan])
+  @@map("organizations")
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  clerk_user_id  String   @unique
+  email          String
+  name           String
+  avatar_url     String?
+  role           Role     @default(MEMBER)
+  org_id         String
+
+  organization   Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  meetings       Meeting[]
+  recaps         Recap[]     @relation("RecapGeneratedBy")
+  audit_logs     AuditLog[]
+
+  @@index([clerk_user_id])
+  @@index([org_id])
+  @@index([role])
+  @@map("users")
+}
+
+model Client {
+  id                    String    @id @default(uuid())
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  deleted_at            DateTime?
+
+  org_id                String
+  name                  String
+  email                 String
+  company               String?
+  avatar_url            String?
+  confirmation_required Boolean   @default(true)
+  timezone              String?
+
+  organization          Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  meetings              Meeting[]
+  recaps                Recap[]
+
+  @@index([org_id])
+  @@index([email])
+  @@index([deleted_at])
+  @@map("clients")
+}
+
+model Meeting {
+  id               String        @id @default(uuid())
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+  deleted_at       DateTime?
+
+  org_id           String
+  user_id          String
+  client_id        String?
+  external_id      String?
+  title            String
+  platform         Platform
+  scheduled_at     DateTime?
+  started_at       DateTime?
+  ended_at         DateTime?
+  duration_seconds Int?
+  status           MeetingStatus @default(SCHEDULED)
+  bot_joined       Boolean       @default(false)
+  recording_url    String?
+  audio_file_path  String?
+
+  organization     Organization      @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  user             User              @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  client           Client?           @relation(fields: [client_id], references: [id], onDelete: SetNull)
+  attendees        MeetingAttendee[]
+  transcript       Transcript?
+  recap            Recap?
+
+  @@index([org_id])
+  @@index([user_id])
+  @@index([client_id])
+  @@index([status])
+  @@index([created_at])
+  @@index([deleted_at])
+  @@index([scheduled_at])
+  @@map("meetings")
+}
+
+model MeetingAttendee {
+  id          String   @id @default(uuid())
+  created_at  DateTime @default(now())
+
+  meeting_id  String
+  name        String
+  email       String
+  is_internal Boolean  @default(false)
+
+  meeting     Meeting  @relation(fields: [meeting_id], references: [id], onDelete: Cascade)
+
+  @@index([meeting_id])
+  @@index([email])
+  @@map("meeting_attendees")
+}
+
+model Transcript {
+  id               String           @id @default(uuid())
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+
+  meeting_id       String           @unique
+  raw_text         String
+  processed_json   Json?
+  word_count       Int?
+  language         String?
+  confidence_score Float?
+  speaker_segments Json?
+  whisper_job_id   String?
+  status           TranscriptStatus @default(PENDING)
+
+  meeting          Meeting          @relation(fields: [meeting_id], references: [id], onDelete: Cascade)
+
+  @@index([meeting_id])
+  @@index([status])
+  @@map("transcripts")
+}
+
+model Recap {
+  id                   String      @id @default(uuid())
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @updatedAt
+  deleted_at           DateTime?
+
+  meeting_id           String      @unique
+  org_id               String
+  client_id            String
+  generated_by_user_id String
+  template_id          String?
+  subject_line         String
+  opening_paragraph    String
+  decisions            Json?
+  next_steps           Json?
+  next_meeting_at      DateTime?
+  quality_score        Int?
+  ai_model_version     String?
+  status               RecapStatus @default(DRAFT)
+  sent_at              DateTime?
+  confirmed_at         DateTime?
+  scheduled_send_at    DateTime?
+
+  meeting              Meeting       @relation(fields: [meeting_id], references: [id], onDelete: Cascade)
+  organization         Organization  @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  client               Client        @relation(fields: [client_id], references: [id], onDelete: Restrict)
+  generated_by         User          @relation("RecapGeneratedBy", fields: [generated_by_user_id], references: [id], onDelete: Restrict)
+  template             RecapTemplate? @relation(fields: [template_id], references: [id], onDelete: SetNull)
+  action_items         ActionItem[]
+  email_events         EmailEvent[]
+
+  @@index([org_id])
+  @@index([client_id])
+  @@index([generated_by_user_id])
+  @@index([template_id])
+  @@index([status])
+  @@index([created_at])
+  @@index([deleted_at])
+  @@index([sent_at])
+  @@map("recaps")
+}
+
+model ActionItem {
+  id               String           @id @default(uuid())
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+
+  recap_id         String
+  task_description String
+  owner_name       String?
+  owner_email      String?
+  due_date         DateTime?
+  priority         Priority         @default(MEDIUM)
+  crm_task_id      String?
+  crm_pushed_at    DateTime?
+  status           ActionItemStatus @default(PENDING)
+
+  recap            Recap            @relation(fields: [recap_id], references: [id], onDelete: Cascade)
+
+  @@index([recap_id])
+  @@index([status])
+  @@index([due_date])
+  @@map("action_items")
+}
+
+model EmailEvent {
+  id                   String         @id @default(uuid())
+  created_at           DateTime       @default(now())
+
+  recap_id             String
+  event_type           EmailEventType
+  occurred_at          DateTime
+  metadata             Json?
+  postmark_message_id  String?
+
+  recap                Recap          @relation(fields: [recap_id], references: [id], onDelete: Cascade)
+
+  @@index([recap_id])
+  @@index([event_type])
+  @@index([created_at])
+  @@map("email_events")
+}
+
+model RecapTemplate {
+  id               String       @id @default(uuid())
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  org_id           String
+  name             String
+  is_default       Boolean      @default(false)
+  tone             TemplateTone @default(STANDARD)
+  subject_template String
+  opening_template String
+  sections_config  Json?
+  html_template    String
+
+  organization     Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  recaps           Recap[]
+
+  @@index([org_id])
+  @@index([is_default])
+  @@map("recap_templates")
+}
+
+model Integration {
+  id               String            @id @default(uuid())
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+
+  org_id           String
+  type             IntegrationType
+  status           IntegrationStatus @default(DISCONNECTED)
+  access_token     String?
+  refresh_token    String?
+  token_expires_at DateTime?
+  metadata         Json?
+
+  organization     Organization      @relation(fields: [org_id], references: [id], onDelete: Cascade)
+
+  @@unique([org_id, type])
+  @@index([org_id])
+  @@index([status])
+  @@map("integrations")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  created_at  DateTime @default(now())
+
+  org_id      String
+  user_id     String?
+  entity_type String
+  entity_id   String
+  action      String
+  old_value   Json?
+  new_value   Json?
+  ip_address  String?
+
+  organization Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([org_id])
+  @@index([user_id])
+  @@index([entity_type, entity_id])
+  @@index([created_at])
+  @@map("audit_logs")
 }

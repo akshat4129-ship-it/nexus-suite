@@ -1,0 +1,313 @@
+[
+  {
+    "name": "get_meeting_by_id",
+    "description": "Retrieve a single meeting record by its UUID, including attendees, linked client, and associated user. Used by the recap pipeline to load meeting context before generating a recap.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "meeting_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "The UUID of the meeting to retrieve."
+        }
+      },
+      "required": ["meeting_id"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_transcript_by_meeting_id",
+    "description": "Retrieve the transcript record associated with a given meeting. Returns raw_text, processed_json, speaker_segments, confidence_score, and status. Used by the AI recap generation step to obtain transcribed content.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "meeting_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "The UUID of the meeting whose transcript should be fetched."
+        }
+      },
+      "required": ["meeting_id"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "create_recap",
+    "description": "Insert a new recap record into the database. Called by the n8n AI pipeline immediately after GPT-4o generates recap content. Sets status to DRAFT by default.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "meeting_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the meeting this recap belongs to."
+        },
+        "org_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the organization."
+        },
+        "client_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the client associated with the meeting."
+        },
+        "generated_by_user_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the user who triggered or owns this recap."
+        },
+        "template_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Optional UUID of the RecapTemplate to apply.",
+          "nullable": true
+        },
+        "subject_line": {
+          "type": "string",
+          "description": "Email subject line for the recap."
+        },
+        "opening_paragraph": {
+          "type": "string",
+          "description": "Opening paragraph of the recap email body."
+        },
+        "decisions": {
+          "type": "array",
+          "description": "Array of decision objects extracted from the meeting.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "integer" },
+              "text": { "type": "string" }
+            },
+            "required": ["id", "text"]
+          },
+          "nullable": true
+        },
+        "next_steps": {
+          "type": "array",
+          "description": "Array of next-step objects with optional assignee and due date.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "integer" },
+              "text": { "type": "string" },
+              "assignee": { "type": "string" },
+              "due": { "type": "string", "format": "date" }
+            },
+            "required": ["id", "text"]
+          },
+          "nullable": true
+        },
+        "next_meeting_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional ISO 8601 datetime for the next scheduled meeting.",
+          "nullable": true
+        },
+        "quality_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "AI-assigned quality score (0–100) for the generated recap.",
+          "nullable": true
+        },
+        "ai_model_version": {
+          "type": "string",
+          "description": "The OpenAI model version string used for generation (e.g. gpt-4o-2024-11-20).",
+          "nullable": true
+        },
+        "scheduled_send_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional scheduled send time. If omitted, recap stays in DRAFT.",
+          "nullable": true
+        }
+      },
+      "required": [
+        "meeting_id",
+        "org_id",
+        "client_id",
+        "generated_by_user_id",
+        "subject_line",
+        "opening_paragraph"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "update_recap_status",
+    "description": "Update the status field of an existing recap. Transitions: DRAFT → SCHEDULED → SENT → CONFIRMED | FAILED. Also updates sent_at when transitioning to SENT.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "recap_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the recap to update."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["DRAFT", "SCHEDULED", "SENT", "CONFIRMED", "FAILED"],
+          "description": "New status value for the recap."
+        }
+      },
+      "required": ["recap_id", "status"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_pending_recaps",
+    "description": "Fetch all DRAFT recaps for an organization that are older than a specified number of hours. Used by n8n scheduled jobs to identify stale recaps that need review or auto-escalation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "org_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the organization to query."
+        },
+        "hours_old": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Return recaps created more than this many hours ago. E.g. 24 means recaps older than 24 hours."
+        }
+      },
+      "required": ["org_id", "hours_old"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mark_recap_confirmed",
+    "description": "Mark a recap as CONFIRMED by the client, setting confirmed_at to the current timestamp. Triggered by the Postmark webhook handler when a client clicks the confirm link in the recap email.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "recap_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the recap being confirmed by the client."
+        }
+      },
+      "required": ["recap_id"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_org_integrations",
+    "description": "Retrieve all integration records for a given organization, including status, type, and non-sensitive metadata. Used by the pipeline to determine which CRM and meeting platforms are active before routing actions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "org_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the organization whose integrations to fetch."
+        }
+      },
+      "required": ["org_id"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "update_action_items_crm_status",
+    "description": "Bulk-update a list of ActionItem records with their CRM task ID after being successfully pushed to HubSpot or Salesforce. Sets status to PUSHED and records crm_pushed_at timestamp.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "minItems": 1,
+          "description": "Array of ActionItem UUIDs to update."
+        },
+        "crm_task_id": {
+          "type": "string",
+          "description": "The task ID returned by the CRM (HubSpot task ID or Salesforce task ID) to associate with these action items."
+        }
+      },
+      "required": ["ids", "crm_task_id"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "insert_audit_log",
+    "description": "Insert a structured audit log entry for any create, update, delete, or send action performed by an agent or user. Required for compliance (Business plan) and internal tracing.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "org_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the organization context."
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the user who performed the action. Null for system/agent actions.",
+          "nullable": true
+        },
+        "entity_type": {
+          "type": "string",
+          "description": "The Prisma model name of the affected entity (e.g. Recap, ActionItem, Integration)."
+        },
+        "entity_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the specific record that was affected."
+        },
+        "action": {
+          "type": "string",
+          "description": "Description of the action performed (e.g. RECAP_SENT, STATUS_UPDATED, CRM_PUSH)."
+        },
+        "old_value": {
+          "type": "object",
+          "description": "JSON snapshot of the entity state before the change.",
+          "nullable": true,
+          "additionalProperties": true
+        },
+        "new_value": {
+          "type": "object",
+          "description": "JSON snapshot of the entity state after the change.",
+          "nullable": true,
+          "additionalProperties": true
+        },
+        "ip_address": {
+          "type": "string",
+          "description": "IP address of the requester, if available.",
+          "nullable": true
+        }
+      },
+      "required": ["org_id", "entity_type", "entity_id", "action"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_orgs_with_active_users",
+    "description": "Return all organizations that have at least one non-deleted user and are on PRO or BUSINESS plans. Used by n8n cron jobs for billing reconciliation and engagement monitoring across the platform.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_this_weeks_stats",
+    "description": "Return aggregated weekly statistics for an organization including: total meetings, completed recaps, confirmation rate, average quality score, and action items pushed to CRM. Used for weekly digest emails and dashboard widgets.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "org_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the organization to aggregate stats for."
+        }
+      },
+      "required": ["org_id"],
+      "additionalProperties": false
+    }
+  }
+]
