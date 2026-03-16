@@ -6,9 +6,13 @@ import Link from 'next/link';
 
 export function EmptyState() {
   return (
-    <div className="bg-card rounded-xl border border-border p-8 shadow-sm flex flex-col items-center justify-center min-h-[400px]">
+    <div 
+      className="bg-card rounded-xl border border-border p-8 shadow-sm flex flex-col items-center justify-center min-h-[400px]"
+      role="status"
+      aria-label="No recaps available"
+    >
       <div className="text-center">
-        <div className="mb-6 flex justify-center">
+        <div className="mb-6 flex justify-center" aria-hidden="true">
           <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center">
             <Calendar className="h-8 w-8 text-primary" />
           </div>
@@ -19,13 +23,13 @@ export function EmptyState() {
           Connect your calendar to get started.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button className="gap-2 bg-primary text-white hover:bg-primary/90 h-11 px-6">
-            <Calendar className="h-4 w-4" />
+          <Button className="gap-2 bg-primary text-white hover:bg-primary/90 h-11 px-6" aria-label="Schedule a new meeting">
+            <Calendar className="h-4 w-4" aria-hidden="true" />
             Schedule Meeting
           </Button>
-          <Link href="/dashboard/clients">
-            <Button variant="outline" className="gap-2 h-11 px-6">
-              <Plus className="h-4 w-4" />
+          <Link href="/dashboard/clients" passHref legacyBehavior>
+            <Button variant="outline" className="gap-2 h-11 px-6" aria-label="Add your first client">
+              <Plus className="h-4 w-4" aria-hidden="true" />
               Add Your First Client
             </Button>
           </Link>

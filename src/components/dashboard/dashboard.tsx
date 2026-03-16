@@ -28,9 +28,9 @@ export function Dashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <TopNav />
 
-      <main className="px-6 py-8">
+      <main className="px-6 py-8" role="main" aria-label="Dashboard Overview">
         {/* Hero Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <section aria-label="Key Performance Indicators" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard 
             label="Recaps Sent This Month"
             value={isLoading ? "..." : (stats?.recaps_sent_this_month ?? "0")}
@@ -51,10 +51,10 @@ export function Dashboard() {
             value={isLoading ? "..." : (stats?.pending_recaps_count ?? "0")}
             subtitle="Require review"
           />
-        </div>
+        </section>
 
         {/* Pipeline Controls */}
-        <div className="flex justify-end mb-8">
+        <div className="flex justify-end mb-8" aria-label="Pipeline Controls">
           <Button 
             onClick={() => {
               toast.promise(new Promise(r => setTimeout(r, 4000)), {
@@ -64,8 +64,10 @@ export function Dashboard() {
               });
             }}
             className="btn-premium flex items-center gap-2 px-6 py-6 text-lg shadow-xl hover:scale-105 transition-transform"
+            aria-label="Run Full Pipeline Test"
+            aria-busy={isLoading}
           >
-            <Activity className="h-5 w-5" />
+            <Activity className="h-5 w-5" aria-hidden="true" />
             Test Full Pipeline
           </Button>
         </div>
@@ -73,14 +75,14 @@ export function Dashboard() {
         {/* Main Content: 2-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: 65% - Recent Recaps */}
-          <div className="lg:col-span-2">
+          <section className="lg:col-span-2" aria-label="Recent Recaps Feed">
             {showEmpty ? <EmptyState /> : <RecapFeed />}
-          </div>
+          </section>
 
           {/* Right: 35% - Sidebar */}
-          <div className="lg:col-span-1">
+          <aside className="lg:col-span-1" aria-label="Upcoming Meetings Sidebar">
             <Sidebar />
-          </div>
+          </aside>
         </div>
       </main>
     </div>
