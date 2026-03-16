@@ -2,6 +2,9 @@ import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET

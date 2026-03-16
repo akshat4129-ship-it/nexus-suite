@@ -95,11 +95,11 @@ export function renderRecapHtml(data: RecapData): string {
   let html = DEFAULT_TEMPLATE;
 
   const decisionsHtml = data.decisions
-    .map(d => `<li><strong>${d.decision}</strong>: ${d.context}</li>`)
+    .map((d: any) => `<li><strong>${d.decision}</strong>: ${d.context}</li>`)
     .join('');
 
   const actionItemsHtml = data.action_items
-    .map(ai => `
+    .map((ai: any) => `
         <tr>
             <td>${ai.task} <br/> <small class="priority-${ai.priority}">${ai.priority} Priority</small></td>
             <td>${ai.owner_name || 'Unassigned'}</td>
@@ -109,7 +109,7 @@ export function renderRecapHtml(data: RecapData): string {
     .join('');
 
   const nextStepsHtml = data.next_steps
-    .map(ns => `<li>${ns}</li>`)
+    .map((ns: any) => `<li>${ns}</li>`)
     .join('');
 
   const nextMeetingSection = data.next_meeting 

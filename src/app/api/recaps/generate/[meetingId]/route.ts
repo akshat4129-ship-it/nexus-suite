@@ -6,14 +6,13 @@ import axios from 'axios';
 
 export const dynamic = 'force-dynamic';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ meetingId: string }> }
 ) {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
   const { meetingId } = await params;
 
   try {

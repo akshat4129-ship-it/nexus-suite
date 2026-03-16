@@ -30,12 +30,12 @@ export async function matchOwner(
 
   // Combine lists
   const matchables: Matchable[] = [
-    ...attendees.map(a => ({ name: a.name, email: a.email })),
-    ...users.map(u => ({ name: u.name, email: u.email }))
+    ...attendees.map((a: any) => ({ name: a.name, email: a.email })),
+    ...users.map((u: any) => ({ name: u.name, email: u.email }))
   ];
 
   // Remove duplicates by email
-  const uniqueMatchables = Array.from(new Map(matchables.map(m => [m.email, m])).values());
+  const uniqueMatchables = Array.from(new Map(matchables.map((m: any) => [m.email, m])).values());
 
   if (uniqueMatchables.length === 0) return null;
 

@@ -2,9 +2,11 @@ import * as postmark from 'postmark';
 import { prisma } from './prisma';
 import { renderRecapHtml, generateConfirmationUrl } from './recap-renderer';
 
-const postmarkClient = new postmark.ServerClient(process.env.POSTMARK_API_KEY || '');
-
 export class EmailService {
+  private getClient() {
+    return new postmark.ServerClient(process.env.POSTMARK_API_KEY || 'fake_key_for_build');
+  }
+
   /**
    * Send a meeting recap to the client via Postmark
    */
@@ -33,12 +35,12 @@ export class EmailService {
         client_name: client.name,
         meeting_date: meeting.scheduled_at ? new Date(meeting.scheduled_at).toLocaleDateString() : 'N/A',
         decisions: recap.decisions as any || [],
-        action_items: (await prisma.actionItem.findMany({ where: { recap_id: recapId } })).map(ai => ({
+        action_items: (await prisma.actionItem.findMany({ where: { recap_id: recapId } })).map((ai: any) => ({
           task: ai.task_description,
           owner_name: ai.owner_name || undefined,
           owner_email: ai.owner_email || undefined,
-          due_date: ai.due_date ? ai.due_date.toISOString() : undefined,
-          priority: ai.priority as string
+          due_date: ai.due_date ? new Date(ai.due_date).toLocaleDateString() : undefined,
+          priority: ai.priority,
         })),
         next_steps: recap.next_steps as any || [],
         next_meeting: recap.next_meeting_at ? recap.next_meeting_at.toISOString() : undefined,
@@ -51,6 +53,7 @@ export class EmailService {
         ? `recap@${organization.custom_domain}` 
         : fromEmail;
 
+      const postmarkClient = this.getClient();
       const response = await postmarkClient.sendEmail({
         From: sender,
         To: client.email,
