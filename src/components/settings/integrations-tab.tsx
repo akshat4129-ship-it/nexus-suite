@@ -1,9 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, ExternalLink } from "lucide-react"
+import { Check, ExternalLink, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 interface Integration {
   id: string
@@ -61,22 +65,44 @@ const ZapierLogo = () => (
   </svg>
 )
 
-const initialIntegrations: Integration[] = [
-  { id: "hubspot", name: "HubSpot", description: "Sync clients and log meetings", logo: <HubSpotLogo />, connected: true, category: "crm" },
-  { id: "salesforce", name: "Salesforce", description: "CRM integration for contacts", logo: <SalesforceLogo />, connected: false, category: "crm" },
-  { id: "zoom", name: "Zoom", description: "Auto-record and transcribe meetings", logo: <ZoomLogo />, connected: true, category: "meeting" },
-  { id: "google-meet", name: "Google Meet", description: "Connect your Google Workspace", logo: <GoogleMeetLogo />, connected: false, category: "meeting" },
-  { id: "ms-teams", name: "Microsoft Teams", description: "Sync with Teams meetings", logo: <TeamsLogo />, connected: false, category: "meeting" },
-  { id: "zapier", name: "Zapier", description: "Automate workflows with 5000+ apps", logo: <ZapierLogo />, connected: false, category: "automation" },
+const staticIntegrations: Omit<Integration, "connected">[] = [
+  { id: "hubspot", name: "HubSpot", description: "Sync clients and log meetings", logo: <HubSpotLogo />, category: "crm" },
+  { id: "salesforce", name: "Salesforce", description: "CRM integration for contacts", logo: <SalesforceLogo />, category: "crm" },
+  { id: "zoom", name: "Zoom", description: "Auto-record and transcribe meetings", logo: <ZoomLogo />, category: "meeting" },
+  { id: "google-meet", name: "Google Meet", description: "Connect your Google Workspace", logo: <GoogleMeetLogo />, category: "meeting" },
+  { id: "ms-teams", name: "Microsoft Teams", description: "Sync with Teams meetings", logo: <TeamsLogo />, category: "meeting" },
+  { id: "zapier", name: "Zapier", description: "Automate workflows with 5000+ apps", logo: <ZapierLogo />, category: "automation" },
 ]
 
 export function IntegrationsTab() {
-  const [integrations, setIntegrations] = useState<Integration[]>(initialIntegrations)
+  const { data: connectedIntegrations, error, mutate } = useSWR("/api/integrations", fetcher)
+  const [loading, setLoading] = useState<string | null>(null)
 
-  const toggleConnection = (id: string) => {
-    setIntegrations(integrations.map((i) =>
-      i.id === id ? { ...i, connected: !i.connected } : i
-    ))
+  const integrations: Integration[] = staticIntegrations.map(si => ({
+    ...si,
+    connected: connectedIntegrations?.some((ci: any) => ci.type.toLowerCase().replace('_', '-') === si.id) || false
+  }))
+
+  const handleToggle = async (id: string, currentlyConnected: boolean) => {
+    setLoading(id)
+    try {
+      // Simulate API call for demo since we're using seed data
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      if (currentlyConnected) {
+        toast.success(`${id} disconnected successfully`)
+      } else {
+        toast.success(`Redirecting to ${id} for authentication...`)
+      }
+      
+      // Local update for demo
+      mutate(
+        connectedIntegrations?.filter((ci: any) => ci.type.toLowerCase() !== id.replace('-', '_')),
+        false
+      )
+    } finally {
+      setLoading(null)
+    }
   }
 
   const categories = [
@@ -84,6 +110,14 @@ export function IntegrationsTab() {
     { key: "meeting", label: "Meeting Platforms" },
     { key: "automation", label: "Automation" },
   ]
+
+  if (!connectedIntegrations && !error) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -106,21 +140,21 @@ export function IntegrationsTab() {
                 <Card
                   key={integration.id}
                   className={`relative transition-all ${
-                    integration.connected ? "ring-2 ring-primary/20" : ""
+                    integration.connected ? "ring-2 ring-primary/20 border-primary/30 bg-primary/5" : ""
                   }`}
                 >
                   {integration.connected && (
-                    <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
+                    <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 shadow-sm border-2 border-background">
                       <Check className="h-3 w-3 text-white" />
                     </div>
                   )}
                   <CardContent className="flex flex-col items-center gap-4 p-6 text-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-muted/50">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-muted/50 transition-colors group-hover:bg-muted">
                       {integration.logo}
                     </div>
                     <div>
                       <h5 className="font-semibold text-foreground">{integration.name}</h5>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                         {integration.description}
                       </p>
                     </div>
@@ -128,9 +162,12 @@ export function IntegrationsTab() {
                       variant={integration.connected ? "outline" : "default"}
                       size="sm"
                       className="w-full"
-                      onClick={() => toggleConnection(integration.id)}
+                      disabled={loading === integration.id}
+                      onClick={() => handleToggle(integration.id, integration.connected)}
                     >
-                      {integration.connected ? (
+                      {loading === integration.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : integration.connected ? (
                         "Disconnect"
                       ) : (
                         <>
@@ -145,6 +182,12 @@ export function IntegrationsTab() {
           </div>
         </div>
       ))}
+
+      {integrations.every(i => !i.connected) && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800 text-sm">
+          <strong>Tip:</strong> Connect HubSpot to sync action items automatically.
+        </div>
+      )}
     </div>
   )
 }

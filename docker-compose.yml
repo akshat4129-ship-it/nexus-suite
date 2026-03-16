@@ -21,29 +21,9 @@ services:
     restart: always
     ports:
       - "6381:6379"
-
-  n8n:
-    image: n8nio/n8n
-    container_name: nexus_n8n
-    restart: always
-    ports:
-      - "5678:5678"
     volumes:
-      - ~/.n8n:/home/node/.n8n
-    environment:
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://localhost:5678/
-      - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
-      - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=n8n
-      - DB_POSTGRESDB_USER=${POSTGRES_USER}
-      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-    depends_on:
-      - postgres
+      - redis_data:/data
 
 volumes:
   postgres_data:
+  redis_data:

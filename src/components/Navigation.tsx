@@ -3,14 +3,23 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { LayoutGrid, Users, Settings, Activity, ShieldCheck, Box } from 'lucide-react';
-
+import { LayoutGrid, Settings, Box, Menu, Activity } from 'lucide-react';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { Show, SignInButton, UserButton, OrganizationSwitcher } from "@clerk/nextjs";
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+  { name: 'Clients', href: '/dashboard/clients', icon: Box },
   { name: 'Onboarding', href: '/onboarding', icon: Box },
   { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Queues', href: '/queues', icon: Activity },
 ];
 
 
@@ -32,18 +41,50 @@ export const Navigation = () => {
             </span>
           </div>
 
-          <div className="hidden md:block">
-            <div className="flex items-baseline space-x-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 group"
-                >
-                  <item.icon className="w-4 h-4 text-gray-400 group-hover:text-indigo-400 transition-colors" />
-                  {item.name}
-                </Link>
-              ))}
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block">
+              <div className="flex items-baseline space-x-4">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 group"
+                  >
+                    <item.icon className="w-4 h-4 text-gray-400 group-hover:text-indigo-400 transition-colors" />
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="bg-background border-border">
+                  <SheetHeader>
+                    <SheetTitle className="text-white flex items-center gap-2">
+                       <Box className="w-6 h-6 text-indigo-400" />
+                       NEXUS<span className="text-indigo-400">SUITE</span>
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col gap-4 mt-8">
+                    {navItems.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className="text-gray-300 hover:text-white px-4 py-3 rounded-md text-lg font-medium transition-colors flex items-center gap-3 bg-secondary/50"
+                      >
+                        <item.icon className="w-5 h-5 text-indigo-400" />
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
 

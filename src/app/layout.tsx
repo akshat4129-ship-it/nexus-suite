@@ -1,11 +1,9 @@
-'use client';
-
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { ThemeProvider } from "@/components/theme-provider";
-import { usePathname } from "next/navigation";
-import { ClerkProvider, Show, UserButton, OrganizationSwitcher } from "@clerk/nextjs";
+import { Toaster } from "sonner";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,19 +12,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const isOnboarding = pathname?.startsWith('/onboarding');
-  const isDashboard = pathname?.startsWith('/dashboard');
-  const isSettings = pathname?.startsWith('/settings');
-  const isEditor = pathname?.includes('/edit');
-  const isEmail = pathname?.includes('/email');
-  
-  const showNav = !isOnboarding && !isDashboard && !isSettings && !isEditor && !isEmail;
-
-
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="en">
         <body className={inter.className}>
           <ThemeProvider
             attribute="class"
@@ -34,10 +22,13 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {showNav && <Navigation />}
-            <main className="min-h-screen">
-              {children}
-            </main>
+            <div className="relative flex min-h-screen flex-col">
+              <Navigation />
+              <main className="flex-1 pt-16">
+                {children}
+              </main>
+            </div>
+            <Toaster richColors position="top-right" />
           </ThemeProvider>
         </body>
       </html>

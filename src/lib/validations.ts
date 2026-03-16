@@ -2,8 +2,8 @@ import { z } from 'zod';
 import { Priority, TemplateTone, MeetingStatus } from '@prisma/client';
 
 export const paginationSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  page: z.coerce.number().nullish().transform(v => v ?? 1).pipe(z.number().min(1)),
+  limit: z.coerce.number().nullish().transform(v => v ?? 20).pipe(z.number().min(1).max(100)),
 });
 
 // Clients

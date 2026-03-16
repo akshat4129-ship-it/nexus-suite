@@ -21,10 +21,10 @@ export function TopNav() {
 
         {/* Center: Navigation Links */}
         <nav className="flex items-center gap-8">
-          {['Dashboard', 'Meetings', 'Clients', 'Templates', 'Settings'].map((item) => (
+          {['Dashboard', 'Meetings', 'Clients', 'Templates', 'Settings', 'Queues'].map((item) => (
             <a
               key={item}
-              href="#"
+              href={item === 'Queues' ? '/api/queues/board' : '#'}
               className={`text-sm transition-colors ${
                 item === 'Dashboard' ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'
               }`}

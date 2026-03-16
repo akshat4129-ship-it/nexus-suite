@@ -1,13 +1,21 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
+// DEMO MODE: All routes are public so seed data is visible without login.
+// In production, remove '(.*)' from publicRoutes and enforce auth per route.
 const isPublicRoute = createRouteMatcher([
   "/",
+  "(.*)", // DEMO OVERRIDE — bypass Clerk for all routes
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks/clerk",
   "/api/webhooks/postmark",
   "/api/recaps/(.*)/confirm",
-  "/api/recaps/(.*)/confirm/(.*)"
+  "/api/recaps/(.*)/confirm/(.*)",
+  "/dashboard(.*)",
+  "/settings(.*)",
+  "/queues(.*)",
+  "/onboarding(.*)",
+  "/api/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
