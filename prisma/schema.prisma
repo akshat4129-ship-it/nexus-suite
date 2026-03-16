@@ -191,7 +191,7 @@ model Meeting {
   org_id           String
   user_id          String
   client_id        String?
-  external_id      String?
+  external_id      String?       @unique
   title            String
   platform         Platform
   scheduled_at     DateTime?
