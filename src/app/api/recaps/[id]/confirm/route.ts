@@ -7,9 +7,18 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ token: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { token } = await params;
+  const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get('token');
+
+  if (!token) {
+    return new NextResponse('<h1>Invalid Request</h1><p>Missing token.</p>', { 
+        status: 400, 
+        headers: { 'Content-Type': 'text/html' } 
+    });
+  }
 
   try {
     const secret = process.env.CONFIRMATION_JWT_SECRET || 'nexus_fallback_secret';
