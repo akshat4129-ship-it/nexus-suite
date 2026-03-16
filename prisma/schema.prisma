@@ -138,15 +138,16 @@ model User {
   id             String   @id @default(uuid())
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
+  deleted_at     DateTime?
 
   clerk_user_id  String   @unique
   email          String
   name           String
   avatar_url     String?
   role           Role     @default(MEMBER)
-  org_id         String
+  org_id         String?
 
-  organization   Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [org_id], references: [id], onDelete: Cascade)
   meetings       Meeting[]
   recaps         Recap[]     @relation("RecapGeneratedBy")
   audit_logs     AuditLog[]

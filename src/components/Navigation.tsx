@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { LayoutGrid, Users, Settings, Activity, ShieldCheck, Box } from 'lucide-react';
 
+import { Show, SignInButton, UserButton, OrganizationSwitcher } from "@clerk/nextjs";
+
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
   { name: 'Onboarding', href: '/onboarding', icon: Box },
@@ -46,12 +48,25 @@ export const Navigation = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="text-gray-400 hover:text-white transition-colors">
-              <Users className="w-5 h-5" />
-            </button>
-            <button className="btn-premium text-sm text-white">
-              Get Started
-            </button>
+            <Show when="signed-in">
+              <OrganizationSwitcher 
+                appearance={{
+                  elements: {
+                    organizationSwitcherTrigger: "text-white hover:bg-white/10 transition-colors",
+                    organizationPreviewTextContainer: "text-white",
+                    organizationPreviewMainIdentifier: "text-white"
+                  }
+                }}
+              />
+              <UserButton />
+            </Show>
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <button className="btn-premium text-sm text-white">
+                  Get Started
+                </button>
+              </SignInButton>
+            </Show>
           </div>
         </div>
       </div>
