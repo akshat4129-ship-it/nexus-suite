@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { ArrowRight, Zap, Shield, Globe, Cpu, BarChart3, Layers } from 'lucide-react';
 
 const fadeInUp = {
@@ -46,12 +47,16 @@ export default function Home() {
             The intelligent infrastructure suite designed for scale. Orchestrate your enterprise with precision, speed, and absolute security.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button className="btn-premium px-8 py-3 text-lg text-white flex items-center gap-2">
-              Launch Deployment <ArrowRight className="w-5 h-5" />
-            </button>
-            <button className="px-8 py-3 text-lg font-semibold text-gray-300 hover:text-white transition-colors glass-card border-gray-800">
-              Read Protocol
-            </button>
+            <Link href="/dashboard">
+              <button className="btn-premium px-8 py-3 text-lg text-white flex items-center gap-2">
+                Launch Deployment <ArrowRight className="w-5 h-5" />
+              </button>
+            </Link>
+            <Link href="/recap">
+              <button className="px-8 py-3 text-lg font-semibold text-gray-300 hover:text-white transition-colors glass-card border-gray-800">
+                Read Protocol
+              </button>
+            </Link>
           </div>
         </motion.div>
       </section>

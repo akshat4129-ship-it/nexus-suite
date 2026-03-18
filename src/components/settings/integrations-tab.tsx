@@ -15,7 +15,7 @@ interface Integration {
   description: string
   logo: React.ReactNode
   connected: boolean
-  category: "crm" | "meeting" | "automation"
+  category: "crm" | "meeting" | "automation" | "email"
 }
 
 const HubSpotLogo = () => (
@@ -59,9 +59,15 @@ const TeamsLogo = () => (
   </svg>
 )
 
-const ZapierLogo = () => (
-  <svg viewBox="0 0 24 24" className="h-8 w-8" fill="#ff4a00">
-    <path d="M12 0L8.59 8.59 0 12l8.59 3.41L12 24l3.41-8.59L24 12l-8.59-3.41L12 0zm0 14.4a2.4 2.4 0 110-4.8 2.4 2.4 0 010 4.8z" />
+const OutlookLogo = () => (
+  <svg viewBox="0 0 24 24" className="h-8 w-8" fill="#0078d4">
+    <path d="M22.5 5.5h-21c-.825 0-1.5.675-1.5 1.5v10c0 .825.675 1.5 1.5 1.5h21c.825 0 1.5-.675 1.5-1.5v-10c0-.825-.675-1.5-1.5-1.5zm-21 1.5h21v10h-21v-10zm10.5 4l-7.5-4h15l-7.5 4z" />
+  </svg>
+)
+
+const GmailLogo = () => (
+  <svg viewBox="0 0 24 24" className="h-8 w-8">
+    <path fill="#4285f4" d="M3 3v18h18V3H3zm16 16H5V7l7 4.5L19 7v12z" />
   </svg>
 )
 
@@ -71,35 +77,39 @@ const staticIntegrations: Omit<Integration, "connected">[] = [
   { id: "zoom", name: "Zoom", description: "Auto-record and transcribe meetings", logo: <ZoomLogo />, category: "meeting" },
   { id: "google-meet", name: "Google Meet", description: "Connect your Google Workspace", logo: <GoogleMeetLogo />, category: "meeting" },
   { id: "ms-teams", name: "Microsoft Teams", description: "Sync with Teams meetings", logo: <TeamsLogo />, category: "meeting" },
-  { id: "zapier", name: "Zapier", description: "Automate workflows with 5000+ apps", logo: <ZapierLogo />, category: "automation" },
+  { id: "outlook", name: "Outlook", description: "Sync your Outlook calendar", logo: <OutlookLogo />, category: "email" },
+  { id: "gmail", name: "Gmail / G-Suite", description: "Send recaps via your G-Suite", logo: <GmailLogo />, category: "email" },
 ]
 
 export function IntegrationsTab() {
   const { data: connectedIntegrations, error, mutate } = useSWR("/api/integrations", fetcher)
   const [loading, setLoading] = useState<string | null>(null)
 
-  const integrations: Integration[] = staticIntegrations.map(si => ({
+  const integrations: Integration[] = staticIntegrations.map((si) => ({
     ...si,
-    connected: connectedIntegrations?.some((ci: any) => ci.type.toLowerCase().replace('_', '-') === si.id) || false
+    connected: Array.isArray(connectedIntegrations)
+      ? connectedIntegrations.some((ci: any) => ci.type.toLowerCase().replace('_', '-') === si.id)
+      : false,
   }))
 
   const handleToggle = async (id: string, currentlyConnected: boolean) => {
     setLoading(id)
     try {
-      // Simulate API call for demo since we're using seed data
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
       if (currentlyConnected) {
-        toast.success(`${id} disconnected successfully`)
+        // In a real app, this would hit /api/integrations/${id}/disconnect
+        
+        // Optimistic local update
+        mutate(
+          connectedIntegrations?.filter((ci: any) => ci.type.toLowerCase() !== id.replace('-', '_')),
+          false
+        )
       } else {
-        toast.success(`Redirecting to ${id} for authentication...`)
+        // Redirect immediately without artificial delays
+        const authPath = `/api/integrations/${id}/connect`
+        window.location.href = authPath
       }
-      
-      // Local update for demo
-      mutate(
-        connectedIntegrations?.filter((ci: any) => ci.type.toLowerCase() !== id.replace('-', '_')),
-        false
-      )
+    } catch (e) {
+      // SILENT CATCH
     } finally {
       setLoading(null)
     }
@@ -109,6 +119,7 @@ export function IntegrationsTab() {
     { key: "crm", label: "CRM" },
     { key: "meeting", label: "Meeting Platforms" },
     { key: "automation", label: "Automation" },
+    { key: "email", label: "Email Providers" },
   ]
 
   if (!connectedIntegrations && !error) {

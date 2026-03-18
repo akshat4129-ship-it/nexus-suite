@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface Step2MeetingsProps {
   onNext: () => void
@@ -70,9 +71,10 @@ export function Step2Meetings({ onNext, onBack }: Step2MeetingsProps) {
     e.stopPropagation()
     if (connected.has(id)) return
     setLoading(id)
+    toast.info(`Bridging connection to ${id} hub...`)
+    
     setTimeout(() => {
-      setConnected(prev => new Set([...prev, id]))
-      setLoading(null)
+      window.location.href = `/api/integrations/${id}/connect`
     }, 1100)
   }
 

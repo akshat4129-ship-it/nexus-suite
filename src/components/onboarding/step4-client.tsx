@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { toast } from "sonner"
 
 interface Step4ClientProps {
   onBack: () => void
@@ -21,10 +22,31 @@ export function Step4Client({ onBack, onFinish }: Step4ClientProps) {
 
   const isValid = form.name.trim() && form.email.trim() && form.company.trim()
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     if (!isValid) return
     setSubmitted(true)
-    setTimeout(onFinish, 800)
+    
+    try {
+      const res = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          company: form.company,
+          confirmation_required: invite,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+        })
+      })
+
+      if (!res.ok) throw new Error('Failed to synchronize node')
+      
+      toast.success('Primary liaison node established.')
+      setTimeout(onFinish, 1200)
+    } catch (e) {
+      toast.error('Sync failure: Could not provision client node')
+      setSubmitted(false)
+    }
   }
 
   if (submitted) {

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 interface Step1CalendarProps {
   onNext: () => void
@@ -15,9 +16,10 @@ export function Step1Calendar({ onNext }: Step1CalendarProps) {
 
   const handleConnect = (provider: CalendarProvider) => {
     setLoading(provider)
+    toast.info(`Spinning up secure link to ${provider} node...`)
+    
     setTimeout(() => {
-      setConnected(provider)
-      setLoading(null)
+      window.location.href = `/api/integrations/${provider}/connect`
     }, 1200)
   }
 

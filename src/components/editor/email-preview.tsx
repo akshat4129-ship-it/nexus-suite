@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,32 +17,50 @@ interface EditableSection {
 }
 
 interface EmailPreviewProps {
+  initialData?: any
   onRegenerate?: (section: string) => void
+  onUpdate?: (updatedData: any) => void
 }
 
-export function EmailPreview({ onRegenerate }: EmailPreviewProps) {
+export function EmailPreview({ initialData, onRegenerate, onUpdate }: EmailPreviewProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showPreview, setShowPreview] = useState(true)
   const [template, setTemplate] = useState('Standard')
   const [content, setContent] = useState<EditableSection>({
-    subject: 'Meeting Recap: Q2 Marketing Strategy',
-    opening: 'Hi team,\n\nHere\'s a recap of our Q2 marketing strategy meeting held on March 15th.',
-    decisions: [
-      'Increase digital ad spend by 20%',
-      'Launch TikTok campaign in parallel with main campaign',
-      'Finalize creative assets by end of week',
-    ],
-    nextSteps: [
-      'Sarah to finalize creative assets',
-      'Mike to prepare budget breakdown',
-      'Team to brief partnership stakeholders',
-    ],
-    nextMeeting: '2026-03-22T10:00',
-    signOff: 'Best regards,\nAgencyRecap',
+    subject: initialData?.subject_line || 'Meeting Recap: Loading...',
+    opening: initialData?.opening_paragraph || '',
+    decisions: initialData?.decisions || [],
+    nextSteps: initialData?.next_steps?.map((s: any) => s.text) || [],
+    nextMeeting: initialData?.next_meeting_at ? new Date(initialData.next_meeting_at).toISOString().slice(0, 16) : '',
+    signOff: initialData?.organization?.email_signature || 'Best regards,\nYour Agency',
   })
 
+  // Sync state if initialData changes (e.g. after save)
+  useEffect(() => {
+    if (initialData) {
+      setContent({
+        subject: initialData.subject_line,
+        opening: initialData.opening_paragraph,
+        decisions: initialData.decisions || [],
+        nextSteps: initialData.next_steps?.map((s: any) => s.text) || [],
+        nextMeeting: initialData.next_meeting_at ? new Date(initialData.next_meeting_at).toISOString().slice(0, 16) : '',
+        signOff: initialData.organization?.email_signature || 'Best regards,\nYour Agency',
+      })
+    }
+  }, [initialData])
+
   const handleUpdateField = (field: keyof EditableSection, value: any) => {
-    setContent(prev => ({ ...prev, [field]: value }))
+    const newContent = { ...content, [field]: value }
+    setContent(newContent)
+    
+    // Convert back to API format
+    onUpdate?.({
+      subject_line: newContent.subject,
+      opening_paragraph: newContent.opening,
+      decisions: newContent.decisions,
+      next_steps: newContent.nextSteps.map((text: string, id: number) => ({ id, text })),
+      next_meeting_at: newContent.nextMeeting,
+    })
   }
 
   const handleUpdateDecision = (idx: number, value: string) => {
@@ -67,7 +85,7 @@ export function EmailPreview({ onRegenerate }: EmailPreviewProps) {
 
   if (!showPreview) {
     return (
-      <div className="h-full flex flex-col bg-white">
+      <div className="h-full flex flex-col bg-card">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Email Preview</h2>
           <Button
@@ -88,7 +106,7 @@ export function EmailPreview({ onRegenerate }: EmailPreviewProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-card">
       {/* Header */}
       <div className="border-b border-border p-6">
         <div className="flex items-center justify-between mb-4">

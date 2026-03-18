@@ -23,7 +23,11 @@ export async function GET(
       },
       include: {
         client: true,
-        meeting: true,
+        meeting: {
+          include: {
+            transcript: true,
+          }
+        },
         action_items: true,
         email_events: {
           orderBy: { occurred_at: 'desc' },

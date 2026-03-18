@@ -5,7 +5,6 @@ import useSWR from 'swr';
 import { toast } from 'sonner';
 import { Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TopNav } from './top-nav';
 import { StatCard } from './stat-card';
 import { RecapFeed } from './recap-feed';
 import { Sidebar } from './sidebar';
@@ -24,10 +23,45 @@ export function Dashboard() {
     }
   });
 
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <TopNav />
+  const [isRunningPipeline, setIsRunningPipeline] = useState(false);
 
+  const runPipeline = async () => {
+    setIsRunningPipeline(true);
+    try {
+      // Get all meetings and find one to test with
+      const meetingsRes = await fetch('/api/meetings');
+      const meetingsData = await meetingsRes.json();
+      const testMeeting = meetingsData.data.find((m: any) => m.status === 'COMPLETED' || m.status === 'SCHEDULED');
+      
+      if (!testMeeting) {
+        toast.error('No compatible meeting nodes found in cluster');
+        return;
+      }
+
+      toast.promise(
+        fetch('/api/queues/meeting-ended', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ meetingId: testMeeting.id })
+        }).then(res => {
+          if (!res.ok) throw new Error();
+          return res.json();
+        }),
+        {
+          loading: `Initializing pipeline for Node: ${testMeeting.title}...`,
+          success: 'Pipeline job queued. Processing in background.',
+          error: 'Pipeline injection failed',
+        }
+      );
+    } catch (e) {
+      toast.error('Terminal error: Cloud sync failed');
+    } finally {
+      setIsRunningPipeline(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen">
       <main className="px-6 py-8" role="main" aria-label="Dashboard Overview">
         {/* Hero Metrics */}
         <section aria-label="Key Performance Indicators" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -53,22 +87,16 @@ export function Dashboard() {
           />
         </section>
 
-        {/* Pipeline Controls */}
         <div className="flex justify-end mb-8" aria-label="Pipeline Controls">
           <Button 
-            onClick={() => {
-              toast.promise(new Promise(r => setTimeout(r, 4000)), {
-                loading: 'Running pipeline: Processing meeting -> Generating recap -> Syncing CRM...',
-                success: 'Pipeline complete! Recap sent to HubSpot and NovaTech.',
-                error: 'Pipeline failed',
-              });
-            }}
+            onClick={runPipeline}
+            disabled={isRunningPipeline}
             className="btn-premium flex items-center gap-2 px-6 py-6 text-lg shadow-xl hover:scale-105 transition-transform"
             aria-label="Run Full Pipeline Test"
-            aria-busy={isLoading}
+            aria-busy={isRunningPipeline}
           >
-            <Activity className="h-5 w-5" aria-hidden="true" />
-            Test Full Pipeline
+            <Activity className={`h-5 w-5 ${isRunningPipeline ? 'animate-spin' : ''}`} aria-hidden="true" />
+            {isRunningPipeline ? 'Initializing...' : 'Test Full Pipeline'}
           </Button>
         </div>
 

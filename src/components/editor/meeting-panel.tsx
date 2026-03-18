@@ -11,6 +11,11 @@ interface Speaker {
   confidence: 'high' | 'medium' | 'low'
 }
 
+interface MeetingPanelProps {
+  initialData?: any
+  meetingData?: any
+}
+
 const mockTranscript: Speaker[] = [
   {
     name: 'Sarah Johnson',
@@ -61,7 +66,7 @@ const confidenceDot = (level: 'high' | 'medium' | 'low') => {
   }
 }
 
-export function MeetingPanel() {
+export function MeetingPanel({ initialData, meetingData }: MeetingPanelProps) {
   const [isReprocessing, setIsReprocessing] = useState(false)
 
   const handleReprocess = () => {
@@ -69,14 +74,19 @@ export function MeetingPanel() {
     setTimeout(() => setIsReprocessing(false), 1500)
   }
 
+  const transcript = initialData?.speaker_segments || mockTranscript
+  const title = meetingData?.title || 'Meeting Transcript'
+  const date = meetingData?.scheduled_at ? new Date(meetingData.scheduled_at).toLocaleDateString() : 'N/A'
+  const duration = meetingData?.duration_seconds ? `${Math.floor(meetingData.duration_seconds / 60)}m` : 'N/A'
+
   return (
-    <div className="h-full flex flex-col bg-white border-r border-border">
+    <div className="h-full flex flex-col bg-card border-r border-border">
       {/* Header */}
-      <div className="border-b border-border p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-2">Q2 Marketing Strategy</h2>
+      <div className="border-b border-border p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-foreground mb-2">{title}</h2>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span>March 15, 2026</span>
-          <span>45 minutes</span>
+          <span>{date}</span>
+          <span>{duration}</span>
           <div className="flex gap-2">
             <div className="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center font-bold">
               S
@@ -93,16 +103,16 @@ export function MeetingPanel() {
 
       {/* Transcript Scroll Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {mockTranscript.map((item, idx) => (
-          <div key={idx} className="space-y-2">
+        {transcript.map((item: any, idx: number) => (
+          <div key={idx} className="space-y-2 group">
             <div className="flex items-start gap-3">
-              <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${confidenceDot(item.confidence)}`} />
+              <div className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${confidenceDot(item.confidence || 'high')}`} />
               <div className="flex-1">
                 <div className="flex items-baseline gap-2 mb-1">
-                  <span className="font-medium text-sm text-foreground">{item.name}</span>
-                  <span className="text-xs text-muted-foreground">{item.timestamp}</span>
+                  <span className="font-semibold text-xs text-indigo-400 uppercase tracking-tighter">{item.name || item.speaker}</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">{item.timestamp || item.start}</span>
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.text}</p>
+                <p className="text-sm text-foreground/80 leading-relaxed font-light">{item.text || item.content}</p>
               </div>
             </div>
           </div>

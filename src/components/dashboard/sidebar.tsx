@@ -1,10 +1,12 @@
 'use client';
 
 import useSWR from 'swr';
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { Plus, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AddClientDialog } from './add-client-dialog';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -45,22 +47,25 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
         <div className="space-y-3">
-          <Button className="w-full justify-start gap-2 bg-primary text-white hover:bg-primary/90 h-10">
-            <Plus className="h-4 w-4" />
-            Add Client
-          </Button>
-          <Button className="w-full justify-start gap-2 bg-primary text-white hover:bg-primary/90 h-10">
-            <Plus className="h-4 w-4" />
-            New Template
-          </Button>
-          <Button className="w-full justify-start gap-2 bg-primary text-white hover:bg-primary/90 h-10">
-            <Plus className="h-4 w-4" />
-            Connect CRM
-          </Button>
+          <AddClientDialog 
+            triggerClassName="w-full justify-start gap-2 h-11 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 text-indigo-400 transition-all group"
+            label={<span className="font-bold uppercase tracking-widest text-[10px]">Add Client Node</span>}
+          />
+          <Link href="/settings?tab=brand" className="block w-full">
+            <Button variant="ghost" className="w-full justify-start gap-2 h-11 bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 text-purple-400 transition-all group">
+              <Plus className="h-4 w-4 group-hover:scale-110 transition-transform" />
+              <span className="font-bold uppercase tracking-widest text-[10px]">New Recap Pattern</span>
+            </Button>
+          </Link>
+          <Link href="/settings?tab=integrations" className="block w-full">
+            <Button variant="ghost" className="w-full justify-start gap-2 h-11 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 text-cyan-400 transition-all group">
+              <Plus className="h-4 w-4 group-hover:scale-110 transition-transform" />
+              <span className="font-bold uppercase tracking-widest text-[10px]">Bridge CRM</span>
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

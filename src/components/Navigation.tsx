@@ -24,6 +24,11 @@ const navItems = [
 
 
 export const Navigation = () => {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-nav">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -58,33 +63,35 @@ export const Navigation = () => {
             </div>
 
             <div className="md:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="bg-background border-border">
-                  <SheetHeader>
-                    <SheetTitle className="text-white flex items-center gap-2">
-                       <Box className="w-6 h-6 text-indigo-400" />
-                       NEXUS<span className="text-indigo-400">SUITE</span>
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="flex flex-col gap-4 mt-8">
-                    {navItems.map((item) => (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className="text-gray-300 hover:text-white px-4 py-3 rounded-md text-lg font-medium transition-colors flex items-center gap-3 bg-secondary/50"
-                      >
-                        <item.icon className="w-5 h-5 text-indigo-400" />
-                        {item.name}
-                      </Link>
-                    ))}
-                  </div>
-                </SheetContent>
-              </Sheet>
+              {mounted && (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+                      <Menu className="h-6 w-6" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="bg-background border-border">
+                    <SheetHeader>
+                      <SheetTitle className="text-white flex items-center gap-2">
+                         <Box className="w-6 h-6 text-indigo-400" />
+                         NEXUS<span className="text-indigo-400">SUITE</span>
+                      </SheetTitle>
+                    </SheetHeader>
+                    <div className="flex flex-col gap-4 mt-8">
+                      {navItems.map((item) => (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className="text-gray-300 hover:text-white px-4 py-3 rounded-md text-lg font-medium transition-colors flex items-center gap-3 bg-secondary/50"
+                        >
+                          <item.icon className="w-5 h-5 text-indigo-400" />
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
             </div>
           </div>
 

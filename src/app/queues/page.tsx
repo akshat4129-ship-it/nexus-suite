@@ -1,13 +1,18 @@
 "use client"
 
 import useSWR from "swr"
-import { TopNav } from "@/components/dashboard/top-nav"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Activity, CheckCircle2, AlertCircle, Clock, Loader2, Play } from "lucide-react"
+import { Activity, CheckCircle2, AlertCircle, Clock, Loader2, Play, Cpu, Zap, Radio } from "lucide-react"
 import { toast } from "sonner"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+};
 
 export default function QueuesPage() {
   const { data: board, error, isLoading } = useSWR("/api/queues/board", fetcher, {
@@ -19,104 +24,121 @@ export default function QueuesPage() {
   }
 
   const queues = [
-    { name: "meeting-processing", status: "active", jobs: 0, completed: 15, failed: 2 },
-    { name: "recap-generation", status: "active", jobs: 0, completed: 12, failed: 0 },
-    { name: "crm-sync", status: "active", jobs: 0, completed: 8, failed: 1 },
-    { name: "webhook-delivery", status: "active", jobs: 0, completed: 42, failed: 0 },
+    { name: "meeting-processing", status: "active", jobs: 0, completed: 15, failed: 2, throughput: "1.2/s" },
+    { name: "recap-generation", status: "active", jobs: 0, completed: 12, failed: 0, throughput: "0.8/s" },
+    { name: "crm-sync", status: "active", jobs: 0, completed: 8, failed: 1, throughput: "2.4/s" },
+    { name: "webhook-delivery", status: "active", jobs: 0, completed: 42, failed: 0, throughput: "12.0/s" },
   ]
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <TopNav />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+    <div className="relative min-h-screen">
+      {/* Background Glow */}
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-indigo-600 rounded-full mix-blend-screen filter blur-[128px] opacity-10 animate-pulse" />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+        <motion.div 
+          initial="initial"
+          animate="animate"
+          variants={fadeInUp}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12"
+        >
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">System Queues</h1>
-            <p className="text-muted-foreground mt-1">Monitor BullMQ background jobs and worker status.</p>
+            <h1 className="text-5xl font-black tracking-tighter text-white mb-2">
+              Neural <span className="text-glow bg-gradient-premium bg-clip-text text-transparent">Queues</span>
+            </h1>
+            <p className="text-gray-400 max-w-xl text-lg">
+              Real-time telemetry and throughput analysis of the Nexus processing fabric.
+            </p>
           </div>
-          <Badge variant="outline" className="px-3 py-1 bg-green-500/10 text-green-500 border-green-500/20 flex items-center gap-1.5 font-medium">
-            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            Workers Online
-          </Badge>
+          <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-3 backdrop-blur-xl">
+             <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Global Status</span>
+                <span className="text-green-400 font-bold flex items-center gap-2">
+                  <Radio className="w-4 h-4 animate-pulse" />
+                  Fabric Operational
+                </span>
+             </div>
+          </div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {[
+            { label: "Active Cycles", val: "0", icon: Activity, color: "text-indigo-400", bg: "bg-indigo-400/10" },
+            { label: "Successful Syncs", val: "77", icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+            { label: "Logic Faults", val: "3", icon: AlertCircle, color: "text-rose-400", bg: "bg-rose-400/10" },
+            { label: "Fabric Latency", val: "12ms", icon: Clock, color: "text-amber-400", bg: "bg-amber-400/10" },
+          ].map((stat, idx) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 * idx }}
+              className="glass-card p-6 flex flex-col gap-4 border-white/5 hover:border-white/10 transition-all"
+            >
+              <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">{stat.label}</p>
+                <p className="text-3xl font-black text-white">{stat.val}</p>
+              </div>
+            </motion.div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Running Jobs</CardTitle>
-              <Activity className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground mt-1">Currently processing</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed (24h)</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">77</div>
-              <p className="text-xs text-muted-foreground mt-1">+12% from yesterday</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Failed Jobs</CardTitle>
-              <AlertCircle className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-muted-foreground mt-1">Requires attention</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg. Wait Time</CardTitle>
-              <Clock className="h-4 w-4 text-amber-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">12s</div>
-              <p className="text-xs text-muted-foreground mt-1">Optimal performance</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Queue Name</th>
-                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active</th>
-                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Completed</th>
-                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Failed</th>
-                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {queues.map((queue) => (
-                <tr key={queue.name} className="hover:bg-secondary/50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-foreground">{queue.name}</td>
-                  <td className="px-6 py-4">
-                    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 text-[10px] uppercase font-bold">
-                      Online
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium">{queue.jobs}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{queue.completed}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-red-500">{queue.failed}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-muted-foreground hover:text-primary transition-colors">
-                      <Play className="h-4 w-4" />
-                    </button>
-                  </td>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="glass-card overflow-hidden"
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-white/5 border-b border-white/5">
+                  <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Protocol Engine</th>
+                  <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Execution State</th>
+                  <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Throughput</th>
+                  <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Completed</th>
+                  <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center text-rose-400">Faults</th>
+                  <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Control</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {queues.map((queue, idx) => (
+                  <motion.tr 
+                    key={queue.name}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 + (0.1 * idx) }}
+                    className="group hover:bg-white/5 transition-all"
+                  >
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <Cpu className="w-5 h-5 text-indigo-400 opacity-50" />
+                        <span className="font-bold text-white tracking-tight">{queue.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2">
+                         <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                         <span className="text-xs font-bold text-emerald-400 uppercase tracking-tighter">Live</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-center text-indigo-300 font-mono text-xs">{queue.throughput}</td>
+                    <td className="px-8 py-6 text-center font-bold text-white">{queue.completed}</td>
+                    <td className="px-8 py-6 text-center font-bold text-rose-500">{queue.failed}</td>
+                    <td className="px-8 py-6 text-right">
+                      <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-indigo-500/20 transition-all border border-transparent hover:border-indigo-500/30">
+                        <Play className="h-4 w-4 fill-current" />
+                      </button>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
       </main>
     </div>
   )
